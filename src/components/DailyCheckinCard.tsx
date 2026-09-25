@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { DailyCheckin } from "@/lib/types";
+import { Flame } from "lucide-react";
 
 const FIELDS: { key: keyof Pick<DailyCheckin, "bible_reading" | "meditation" | "memorization" | "pray_note">; label: string }[] = [
   { key: "bible_reading", label: "성경읽기" },
@@ -15,10 +16,13 @@ export default function DailyCheckinCard({
   userId,
   initial,
   today,
+  streakUntilYesterday,
 }: {
   userId: string | null;
   initial: DailyCheckin | null;
   today: string;
+  /** Consecutive checked-in days ending yesterday (today extends it once anything is checked). */
+  streakUntilYesterday: number;
 }) {
   const supabase = createClient();
   const [state, setState] = useState({
@@ -30,6 +34,12 @@ export default function DailyCheckinCard({
   const [, startTransition] = useTransition();
 
   if (!userId) return null;
+
+  const anyToday = Object.values(state).some(Boolean);
+  const streak = streakUntilYesterday + (anyToday ? 1 : 0);
+  let streakText = "오늘 첫 체크를 해보세요";
+  if (streak > 0 && anyToday) streakText = `${streak}일 연속`;
+  else if (streak > 0) streakText = `${streak}일 연속 · 오늘도 이어가요`;
 
   function toggle(key: keyof typeof state) {
     const next = { ...state, [key]: !state[key] };
@@ -43,7 +53,13 @@ export default function DailyCheckinCard({
 
   return (
     <div className="rounded-xl bg-accent-bg p-3.5">
-      <p className="text-xs font-medium text-accent-fg mb-2">오늘의 자가 체크</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-medium text-accent-fg">오늘의 자가 체크</p>
+        <span className="text-[11px] text-accent-fg flex items-center gap-1" aria-live="polite">
+          <Flame size={12} color={streak > 0 ? "var(--gold)" : "currentColor"} />
+          {streakText}
+        </span>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {FIELDS.map(({ key, label }) => (
           <button

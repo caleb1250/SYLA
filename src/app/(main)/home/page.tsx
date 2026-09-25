@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ChevronRight, PartyPopper } from "lucide-react";
+import BadgeIcon from "@/components/BadgeIcon";
 import { getCurrentUserAndProfile } from "@/lib/current-user";
 import DailyCheckinCard from "@/components/DailyCheckinCard";
 import AttendanceButton from "@/components/AttendanceButton";
 import ProgressBar from "@/components/ProgressBar";
 import { loadCurriculum, lessonHref } from "@/lib/curriculum";
+import { addDays, activityByDay, computeStreaks, type CheckinRow } from "@/lib/growth";
 import { attendanceWindow, formatDate, formatTime, monthDayInAppTz, todayInAppTz } from "@/lib/date";
 import type { ChurchEvent } from "@/lib/types";
 
@@ -18,7 +20,9 @@ export default async function HomePage() {
   const cutoff = new Date(now - 1000 * 60 * 60 * 6).toISOString();
   const today = todayInAppTz();
 
-  const [{ data: upcomingEvents }, { data: todayCheckin }, curriculum] = await Promise.all([
+  const newBadgeSince = new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString();
+
+  const [{ data: upcomingEvents }, { data: todayCheckin }, curriculum, { data: recentCheckins }, { data: newBadges }] = await Promise.all([
     supabase
       .from("events")
       .select("*")
@@ -30,7 +34,27 @@ export default async function HomePage() {
       ? supabase.from("daily_checkins").select("*").eq("user_id", user.id).eq("checkin_date", today).maybeSingle()
       : Promise.resolve({ data: null }),
     loadCurriculum(supabase, user?.id ?? null),
+    user
+      ? supabase
+          .from("daily_checkins")
+          .select("checkin_date, bible_reading, meditation, memorization, pray_note")
+          .eq("user_id", user.id)
+          .gte("checkin_date", addDays(today, -400))
+          .lt("checkin_date", today)
+          .returns<CheckinRow[]>()
+      : Promise.resolve({ data: [] as CheckinRow[] }),
+    user
+      ? supabase
+          .from("user_badges")
+          .select("id, awarded_at, badges(name, icon)")
+          .eq("user_id", user.id)
+          .gte("awarded_at", newBadgeSince)
+          .order("awarded_at", { ascending: false })
+          .returns<{ id: string; awarded_at: string; badges: { name: string; icon: string } | null }[]>()
+      : Promise.resolve({ data: [] }),
   ]);
+
+  const { untilYesterday } = computeStreaks(activityByDay(recentCheckins ?? []), today);
 
   const nextEvent = upcomingEvents?.[0] ?? null;
 
@@ -49,7 +73,30 @@ export default async function HomePage() {
     <div className="flex flex-col gap-5 pt-2 pb-4">
       <p className="text-sm text-muted">안녕하세요, {profile?.full_name ?? "SYLA"}님</p>
 
-      <DailyCheckinCard userId={user?.id ?? null} initial={todayCheckin ?? null} today={today} />
+      {newBadges && newBadges.length > 0 && (
+        <Link href="/profile" className="rounded-xl bg-gold-bg p-3 flex items-center gap-3">
+          <span className="w-9 h-9 rounded-full bg-gold flex items-center justify-center shrink-0">
+            <BadgeIcon icon={newBadges[0].badges?.icon ?? "award"} size={18} color="white" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-gold-fg">새 배지를 받았어요</p>
+            <p className="text-[13px] font-medium truncate">
+              {newBadges
+                .map((b) => b.badges?.name)
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+          </div>
+          <ChevronRight size={16} className="text-gold-fg shrink-0" />
+        </Link>
+      )}
+
+      <DailyCheckinCard
+        userId={user?.id ?? null}
+        initial={todayCheckin ?? null}
+        today={today}
+        streakUntilYesterday={untilYesterday}
+      />
 
       {nextEvent && (
         <div className="flex flex-col gap-2">

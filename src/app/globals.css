@@ -12,6 +12,11 @@
   --gold: #c9a24b;
   --gold-bg: #faf3e2;
   --gold-fg: #8a6d1f;
+  /* activity calendar: one hue (navy), light → dark = 1 → 4 items checked */
+  --heat-1: #dfe5ee;
+  --heat-2: #aebbd0;
+  --heat-3: #5f7697;
+  --heat-4: #0c2d55;
 }
 
 @theme inline {

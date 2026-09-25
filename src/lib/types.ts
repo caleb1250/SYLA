@@ -103,6 +103,8 @@ export type Attendance = {
 
 export type Badge = {
   id: string;
+  /** Stable id for automatically-awarded badges (null for badges an admin created by hand). */
+  code: string | null;
   name: string;
   description: string | null;
   icon: string;
