@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f6f2;
+  --foreground: #14212f;
+  --card: #ffffff;
+  --border: #e4e1d8;
+  --muted: #7d7a70;
+  --accent: #0c2d55;
+  --accent-bg: #e8ecf3;
+  --accent-fg: #0c2d55;
+  --gold: #c9a24b;
+  --gold-bg: #faf3e2;
+  --gold-fg: #8a6d1f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-fg: var(--accent-fg);
+  --color-gold: var(--gold);
+  --color-gold-bg: var(--gold-bg);
+  --color-gold-fg: var(--gold-fg);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+input, select, textarea {
+  font-size: 16px;
+}
