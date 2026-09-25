@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { QrCode } from "lucide-react";
 import { getCurrentUserAndProfile } from "@/lib/current-user";
 import { formatDateTime } from "@/lib/date";
 import type { ChurchEvent, Profile } from "@/lib/types";
@@ -23,6 +25,12 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
         <p className="text-[15px] font-medium">{event.title}</p>
         <p className="text-xs text-muted mt-0.5">{formatDateTime(event.starts_at)}</p>
         <p className="text-xs text-muted mt-1">출석 {presentIds.size} / {members?.length ?? 0}</p>
+        <Link
+          href={`/leader/checkin/${event.id}`}
+          className="mt-3 inline-flex items-center gap-1.5 text-xs rounded-full bg-accent text-white px-3 py-1.5"
+        >
+          <QrCode size={13} /> 출석 코드 · QR 띄우기
+        </Link>
       </div>
 
       <div className="flex flex-col gap-1">

@@ -377,7 +377,7 @@ begin
   returning id into m_id;
 
   insert into public.lessons (module_id, title, subtitle, sort_order) values
-  (m_id, 'Discussion Session 1', '필독서 토론 1 (9/25)', 1),
+  (m_id, 'Discussion Session 1', '필독서 토론 1 (9/27)', 1),
   (m_id, 'Discussion Session 2', '필독서 토론 2 (10/30)', 2),
   (m_id, 'Discussion Session 3', '필독서 토론 3 (12/4)', 3);
 end $$;
@@ -388,7 +388,7 @@ insert into public.events (title, description, event_type, starts_at, location) 
   ('개강 · Bible Study Session 1', null, 'bible_study', '2026-09-04 18:30:00-04', 'Unity Hall'),
   ('Bible Study Session 2', null, 'bible_study', '2026-09-11 18:30:00-04', 'Unity Hall'),
   ('Bible Study Session 3', null, 'bible_study', '2026-09-18 18:30:00-04', 'Unity Hall'),
-  ('독서와 통찰 Session 1', null, 'discussion', '2026-09-25 18:30:00-04', 'Unity Hall'),
+  ('독서와 통찰 Session 1', null, 'discussion', '2026-09-27 14:00:00-04', 'Unity Hall'),
   ('Bible Study Session 4', null, 'bible_study', '2026-10-02 18:30:00-04', 'Unity Hall'),
   ('Bible Study Session 5', null, 'bible_study', '2026-10-09 18:30:00-04', 'Unity Hall'),
   ('Field Trip 1 (Chick-fil-A)', null, 'field_trip', '2026-10-16 15:00:00-04', 'Chick-fil-A'),

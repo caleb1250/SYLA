@@ -24,7 +24,10 @@ export default function LoginPage() {
       setError("이메일 또는 비밀번호가 올바르지 않아요.");
       return;
     }
-    router.push("/home");
+    const next = new URLSearchParams(window.location.search).get("next");
+    // only same-site paths, never "//evil.com" or "/\evil.com"
+    const safe = next && /^\/(?![/\\])/.test(next) ? next : "/home";
+    router.push(safe);
     router.refresh();
   }
 

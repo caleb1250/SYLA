@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, PartyPopper } from "lucide-react";
+import { ChevronRight, MessageCircle, Megaphone, PartyPopper, Pin } from "lucide-react";
 import BadgeIcon from "@/components/BadgeIcon";
 import { getCurrentUserAndProfile } from "@/lib/current-user";
 import DailyCheckinCard from "@/components/DailyCheckinCard";
@@ -8,7 +8,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { loadCurriculum, lessonHref } from "@/lib/curriculum";
 import { addDays, activityByDay, computeStreaks, type CheckinRow } from "@/lib/growth";
 import { attendanceWindow, formatDate, formatTime, monthDayInAppTz, todayInAppTz } from "@/lib/date";
-import type { ChurchEvent } from "@/lib/types";
+import type { Announcement, ChurchEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +56,37 @@ export default async function HomePage() {
 
   const { untilYesterday } = computeStreaks(activityByDay(recentCheckins ?? []), today);
 
+  // Announcements the student can see (RLS: academy-wide + their own small group), last 30 days.
+  const [{ data: announcements }, { data: feedback }] = await Promise.all([
+    supabase
+      .from("announcements")
+      .select("*")
+      .gte("created_at", new Date(now - 1000 * 60 * 60 * 24 * 30).toISOString())
+      .order("pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .returns<Announcement[]>(),
+    // Leader feedback on my own responses in the last 7 days.
+    user
+      ? supabase
+          .from("response_feedback")
+          .select("id, body, created_at, profiles(full_name), lesson_responses!inner(user_id, lesson_id, lessons(id, module_id, title))")
+          .eq("lesson_responses.user_id", user.id)
+          .gte("created_at", new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(3)
+          .returns<
+            {
+              id: string;
+              body: string;
+              created_at: string;
+              profiles: { full_name: string } | null;
+              lesson_responses: { lessons: { id: string; module_id: string; title: string } | null } | null;
+            }[]
+          >()
+      : Promise.resolve({ data: [] }),
+  ]);
+
   const nextEvent = upcomingEvents?.[0] ?? null;
 
   let alreadyCheckedIn = false;
@@ -72,6 +103,48 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-5 pt-2 pb-4">
       <p className="text-sm text-muted">안녕하세요, {profile?.full_name ?? "SYLA"}님</p>
+
+      {announcements && announcements.length > 0 && (
+        <section className="flex flex-col gap-2" aria-label="공지">
+          {announcements.map((a) => (
+            <div key={a.id} className="rounded-xl border border-border bg-card p-3 flex gap-2.5">
+              {a.pinned ? (
+                <Pin size={15} className="text-gold shrink-0 mt-0.5" />
+              ) : (
+                <Megaphone size={15} className="text-accent shrink-0 mt-0.5" />
+              )}
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium">{a.title}</p>
+                {a.body && <p className="text-xs text-muted mt-0.5 whitespace-pre-line leading-5 line-clamp-4">{a.body}</p>}
+                <p className="text-[11px] text-muted mt-1">
+                  {a.group_id ? "소그룹 공지" : "전체 공지"} · {formatDate(a.created_at)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {feedback &&
+        feedback.map((f) => {
+          const lesson = f.lesson_responses?.lessons;
+          return (
+            <Link
+              key={f.id}
+              href={lesson ? `${lessonHref(lesson)}#feedback` : "/learn"}
+              className="rounded-xl bg-accent-bg p-3 flex items-center gap-3"
+            >
+              <MessageCircle size={18} className="text-accent-fg shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-accent-fg">
+                  {f.profiles?.full_name ?? "리더"}님의 피드백{lesson ? ` · ${lesson.title}` : ""}
+                </p>
+                <p className="text-[13px] truncate">{f.body}</p>
+              </div>
+              <ChevronRight size={16} className="text-accent-fg shrink-0" />
+            </Link>
+          );
+        })}
 
       {newBadges && newBadges.length > 0 && (
         <Link href="/profile" className="rounded-xl bg-gold-bg p-3 flex items-center gap-3">

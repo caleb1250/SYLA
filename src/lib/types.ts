@@ -118,3 +118,24 @@ export type UserBadge = {
   awarded_at: string;
   badges?: Badge;
 };
+
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string | null;
+  /** null = whole academy; otherwise only that small group sees it */
+  group_id: string | null;
+  author_id: string | null;
+  pinned: boolean;
+  created_at: string;
+};
+
+export type ResponseFeedback = {
+  id: string;
+  response_id: string;
+  author_id: string | null;
+  body: string;
+  created_at: string;
+};
+
+export type CheckInResult = "ok" | "already" | "not_open" | "closed" | "bad_code" | "locked" | "not_found" | "signed_out";

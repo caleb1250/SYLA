@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, MessageCircle } from "lucide-react";
 import { getCurrentUserAndProfile } from "@/lib/current-user";
 import { loadCurriculum, lessonHref } from "@/lib/curriculum";
 import { toEmbedUrl } from "@/lib/video";
@@ -8,6 +8,7 @@ import MarkCompleteButton from "@/components/MarkCompleteButton";
 import ReflectionJournal from "@/components/ReflectionJournal";
 import ActionStepCard from "@/components/ActionStepCard";
 import type { Lesson, LessonResponse } from "@/lib/types";
+import { formatDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,15 @@ export default async function LessonPage({
   const completed = curriculum.completedIds.has(lesson.id);
 
   const embedUrl = toEmbedUrl(lesson.video_url);
+
+  const { data: feedback } = response
+    ? await supabase
+        .from("response_feedback")
+        .select("id, body, created_at, profiles(full_name)")
+        .eq("response_id", response.id)
+        .order("created_at")
+        .returns<{ id: string; body: string; created_at: string; profiles: { full_name: string } | null }[]>()
+    : { data: [] };
 
   let photoUrl: string | null = null;
   if (response?.action_photo_path) {
@@ -133,6 +143,22 @@ export default async function LessonPage({
           initialPhotoPath={response?.action_photo_path ?? null}
           initialPhotoUrl={photoUrl}
         />
+      )}
+
+      {feedback && feedback.length > 0 && (
+        <section id="feedback" className="flex flex-col gap-2 scroll-mt-16">
+          <p className="text-xs font-medium text-muted flex items-center gap-1.5">
+            <MessageCircle size={13} /> 리더의 피드백
+          </p>
+          {feedback.map((f) => (
+            <div key={f.id} className="rounded-xl bg-accent-bg px-3 py-2.5">
+              <p className="text-[11px] text-accent-fg">
+                {f.profiles?.full_name ?? "리더"} · {formatDate(f.created_at)}
+              </p>
+              <p className="text-[13px] leading-6 whitespace-pre-line mt-0.5">{f.body}</p>
+            </div>
+          ))}
+        </section>
       )}
 
       <Section title="기도 · Prayer">{lesson.prayer}</Section>

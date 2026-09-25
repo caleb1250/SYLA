@@ -8,6 +8,8 @@ const links = [
   { href: "/admin/events", label: "일정 · 출석" },
   { href: "/admin/groups", label: "소그룹" },
   { href: "/admin/badges", label: "배지" },
+  { href: "/admin/announcements", label: "공지" },
+  { href: "/leader", label: "리더 대시보드" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
